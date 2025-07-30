@@ -1,7 +1,7 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
 import {CreateUserDto} from './dto/create-user.dto';
 import {UpdateUserDto} from './dto/update-user.dto';
-import {Repository} from "typeorm";
+import {EntityNotFoundError, Repository} from "typeorm";
 import {User} from "./entities/user.entity";
 import {InjectRepository} from "@nestjs/typeorm";
 
@@ -21,27 +21,39 @@ export class UsersService {
     }
 
     async findOne(id: number) {
-        const user = await this.userRepository.findOneBy({id});
-        if (!user) {
-            throw new NotFoundException(`User with id ${id} not found`);
+        try {
+            return await this.userRepository.findOneByOrFail({id});
+        } catch (error) {
+            if (error instanceof EntityNotFoundError) {
+                throw new NotFoundException(`User with ID ${id} not found.`);
+            }
+            throw error;
         }
-        return user;
     }
 
     async update(id: number, updateUserDto: UpdateUserDto) {
-        const user = await this.userRepository.findOneBy({id});
-        if (!user) {
-            throw new NotFoundException(`User with id ${id} not found`);
+        try {
+            const user = await this.userRepository.findOneByOrFail({id});
+            return this.userRepository.save({...user, ...updateUserDto});
+        } catch (error) {
+            if (error instanceof EntityNotFoundError) {
+                throw new NotFoundException(`User with ID ${id} not found.`);
+            }
+            throw error;
         }
-        return this.userRepository.save({...user, ...updateUserDto});
     }
 
     async remove(id: number) {
-        const user = await this.userRepository.findOneBy({id});
-        if (!user) {
-            throw new NotFoundException(`User with id ${id} not found`);
+        try {
+            const user = await this.userRepository.findOneByOrFail({id});
+        } catch (error) {
+            if (error instanceof EntityNotFoundError) {
+                throw new NotFoundException(`User with ID ${id} not found.`);
+            }
+            throw error;
         }
-        await this.userRepository.delete(id);
+
+        await this.userRepository.softDelete(id);
         return `User #${id} was deleted`;
     }
 }
