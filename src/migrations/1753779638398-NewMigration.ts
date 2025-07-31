@@ -14,7 +14,6 @@ export class NewMigration1753779638398 implements MigrationInterface {
                         isPrimary: true,
                         isGenerated: true,
                         generationStrategy: "increment"
-
                     },
                     {
                         name: "name",
@@ -41,7 +40,7 @@ export class NewMigration1753779638398 implements MigrationInterface {
                     {
                         name: "deleted_at",
                         type: "timestamp",
-                        default: "now()",
+                        isNullable: true,
                     },
                 ],
             }),

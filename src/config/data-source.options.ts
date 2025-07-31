@@ -1,8 +1,20 @@
-import { DataSourceOptions } from 'typeorm';
+import { DataSourceOptions, DefaultNamingStrategy } from 'typeorm';
 import * as dotenv from 'dotenv';
-import { User } from '../users/entities/user.entity';
+import { snakeCase } from "typeorm/util/StringUtils";
 
 dotenv.config();
+
+class CustomNamingStrategy extends DefaultNamingStrategy {
+    columnName(
+        propertyName: string,
+        customName: string | undefined,
+        embeddedPrefixes: string[]
+    ): string {
+        return snakeCase(
+            embeddedPrefixes.concat(customName ? customName : propertyName).join("_")
+        );
+    }
+}
 
 export const dataSourceOptions: DataSourceOptions = {
     type: 'mysql',
@@ -14,4 +26,5 @@ export const dataSourceOptions: DataSourceOptions = {
     entities: [__dirname + '/../**/*.entity.{ts,js}'],
     migrations: [__dirname + '/../migrations/*.{ts,js}'],
     synchronize: false,
+    namingStrategy: new CustomNamingStrategy()
 };

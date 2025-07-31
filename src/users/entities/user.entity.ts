@@ -1,6 +1,16 @@
-import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
+import {
+    BeforeInsert,
+    BeforeUpdate,
+    Column,
+    CreateDateColumn,
+    DeleteDateColumn,
+    Entity,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
+} from "typeorm";
+import * as bcrypt from 'bcrypt';
 
-@Entity({ name: 'users' })
+@Entity({name: 'users'})
 export class User {
     @PrimaryGeneratedColumn()
     id: number;
@@ -14,12 +24,20 @@ export class User {
     @Column()
     password: string;
 
-    @Column()
-    created_at: Date;
+    @CreateDateColumn()
+    createdAt: Date;
 
-    @Column()
-    updated_at: Date;
+    @UpdateDateColumn()
+    updatedAt: Date;
 
-    @Column()
-    deleted_at: Date;
+    @DeleteDateColumn({nullable: true})
+    deletedAt?: Date;
+
+    @BeforeUpdate()
+    @BeforeInsert()
+    async hashPassword() {
+        if (this.password) {
+            this.password = await bcrypt.hash(this.password, 10);
+        }
+    }
 }

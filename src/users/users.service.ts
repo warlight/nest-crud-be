@@ -9,11 +9,12 @@ import {InjectRepository} from "@nestjs/typeorm";
 export class UsersService {
     constructor(
         @InjectRepository(User)
-        private userRepository: Repository<User>,
+        private readonly userRepository: Repository<User>,
     ) {}
 
     async create(createUserDto: CreateUserDto) {
-        return await this.userRepository.save(createUserDto);
+        const user = this.userRepository.create(createUserDto);
+        return await this.userRepository.save(user);
     }
 
     async findAll(): Promise<User[]> {
@@ -34,7 +35,16 @@ export class UsersService {
     async update(id: number, updateUserDto: UpdateUserDto) {
         try {
             const user = await this.userRepository.findOneByOrFail({id});
-            return this.userRepository.save({...user, ...updateUserDto});
+            if (updateUserDto.name) {
+                user.name = updateUserDto.name;
+            }
+            if (updateUserDto.password) {
+                user.password = updateUserDto.password;
+            }
+            if (updateUserDto.email) {
+                user.email = updateUserDto.email;
+            }
+            return this.userRepository.save(user);
         } catch (error) {
             if (error instanceof EntityNotFoundError) {
                 throw new NotFoundException(`User with ID ${id} not found.`);
