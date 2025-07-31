@@ -1,14 +1,5 @@
-import {
-    BeforeInsert,
-    BeforeUpdate,
-    Column,
-    CreateDateColumn,
-    DeleteDateColumn,
-    Entity,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn
-} from "typeorm";
-import * as bcrypt from 'bcrypt';
+import {Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn} from "typeorm";
+import {Exclude} from "class-transformer";
 
 @Entity({name: 'users'})
 export class User {
@@ -22,6 +13,7 @@ export class User {
     email: string;
 
     @Column()
+    @Exclude()
     password: string;
 
     @CreateDateColumn()
@@ -31,13 +23,6 @@ export class User {
     updatedAt: Date;
 
     @DeleteDateColumn({nullable: true})
+    @Exclude()
     deletedAt?: Date;
-
-    @BeforeUpdate()
-    @BeforeInsert()
-    async hashPassword() {
-        if (this.password) {
-            this.password = await bcrypt.hash(this.password, 10);
-        }
-    }
 }

@@ -1,18 +1,23 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import {Injectable, NotFoundException, UnauthorizedException} from '@nestjs/common';
 import {CreateUserDto} from './dto/create-user.dto';
 import {UpdateUserDto} from './dto/update-user.dto';
 import {EntityNotFoundError, Repository} from "typeorm";
 import {User} from "./entities/user.entity";
 import {InjectRepository} from "@nestjs/typeorm";
+import * as bcrypt from "bcrypt";
+
+const saltRounds = 10;
 
 @Injectable()
 export class UsersService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
-    ) {}
+    ) {
+    }
 
     async create(createUserDto: CreateUserDto) {
+        createUserDto.password = await bcrypt.hash(createUserDto.password, saltRounds);
         const user = this.userRepository.create(createUserDto);
         return await this.userRepository.save(user);
     }
@@ -39,7 +44,7 @@ export class UsersService {
                 user.name = updateUserDto.name;
             }
             if (updateUserDto.password) {
-                user.password = updateUserDto.password;
+                user.password = await bcrypt.hash(updateUserDto.password, saltRounds);
             }
             if (updateUserDto.email) {
                 user.email = updateUserDto.email;
@@ -65,5 +70,18 @@ export class UsersService {
 
         await this.userRepository.softDelete(id);
         return `User #${id} was deleted`;
+    }
+
+    async checkUser(email: string, password: string): Promise<User> {
+        try {
+            const user = await this.userRepository.findOneByOrFail({email});
+            if (await bcrypt.compare(password, user.password)) {
+                return user;
+            }
+        } catch (error) {
+            throw new UnauthorizedException('Wrong credentials');
+        }
+
+        throw new UnauthorizedException('Wrong credentials');
     }
 }
